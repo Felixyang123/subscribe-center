@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: subscribe-center-sample
+
+server:
+  port: 8201
+
+logging:
+  level:
+    root: INFO
+    com.wly.center: DEBUG
+
+subscribe-center:
+  port: 8300
+  baseAdminUrl: http://localhost:8200
+  renewIntervalSeconds: 5
