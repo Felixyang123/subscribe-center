@@ -16,13 +16,13 @@ public record PersistWatcherStorage(WatcherRep watcherRep) implements WatcherSto
     }
 
     @Override
-    public List<Watcher> watchers(Long nodeId) {
-        return watcherRep.list(Wrappers.<Watcher>lambdaQuery().eq(Watcher::getNodeId, nodeId));
+    public List<Watcher> watchers(String nodeName) {
+        return watcherRep.list(Wrappers.<Watcher>lambdaQuery().eq(Watcher::getNode, nodeName));
     }
 
     @Override
-    public List<Watcher> remove(Long nodeId) {
-        List<Watcher> watchers = watcherRep.list(Wrappers.<Watcher>lambdaQuery().eq(Watcher::getNodeId, nodeId));
+    public List<Watcher> remove(String nodeName) {
+        List<Watcher> watchers = watcherRep.list(Wrappers.<Watcher>lambdaQuery().eq(Watcher::getNode, nodeName));
         if (!watchers.isEmpty()) {
             watcherRep.removeBatchByIds(watchers);
         }

@@ -11,6 +11,7 @@
         <module>core</module>
         <module>subscribe-center-spring-boot-starter</module>
         <module>subscribe-center-samples</module>
+        <module>subscribe-utils</module>
     </modules>
 
     <properties>

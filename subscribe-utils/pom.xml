@@ -1,0 +1,37 @@
+<project>
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.wly</groupId>
+        <artifactId>subscribe-center</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <groupId>com.wly.center</groupId>
+    <artifactId>subscribe-utils</artifactId>
+    <name>subscribe-utils</name>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.wly.center</groupId>
+            <artifactId>core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+        </dependency>
+    </dependencies>
+
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

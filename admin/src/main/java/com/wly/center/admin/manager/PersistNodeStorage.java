@@ -74,7 +74,7 @@ public class PersistNodeStorage implements NodeStorage, SmartLifecycle {
     @Override
     public Node remove(String name) {
         Node node = nodeRep.getOne(Wrappers.<Node>lambdaQuery().eq(Node::getName, name));
-        if (nodeRep.removeById(node)) {
+        if (nodeRep.remove(Wrappers.<Node>lambdaQuery().eq(Node::getName, name))) {
             return node;
         }
         return null;

@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 public record WatcherManager(WatcherStorage watcherStorage) {
 
     public void nodeDeleted(Node node) {
-        List<Watcher> watchers = watcherStorage.remove(node.getId());
+        List<Watcher> watchers = watcherStorage.remove(node.getName());
         if (CollectionUtils.isEmpty(watchers)) {
             return;
         }
@@ -27,7 +27,7 @@ public record WatcherManager(WatcherStorage watcherStorage) {
     }
 
     public synchronized void dataChanged(Node node) {
-        List<Watcher> watchers = watcherStorage.watchers(node.getId());
+        List<Watcher> watchers = watcherStorage.watchers(node.getName());
         if (CollectionUtils.isEmpty(watchers)) {
             return;
         }
@@ -51,6 +51,7 @@ public record WatcherManager(WatcherStorage watcherStorage) {
                     .executionTime(System.currentTimeMillis())
                     .type(ExchangeType.WATCHER.getCode())
                     .req(WatcherExchangeReq.builder()
+                            .keys(partition.stream().map(Watcher::getKey).toList())
                             .exchangeType(exchangeType.getCode())
                             .node(node.getName())
                             .build())

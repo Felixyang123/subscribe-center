@@ -8,9 +8,9 @@ public interface WatcherStorage {
 
     void add(Watcher watcher);
 
-    List<Watcher> watchers(Long nodeId);
+    List<Watcher> watchers(String nodeName);
 
-    List<Watcher> remove(Long nodeId);
+    List<Watcher> remove(String nodeName);
 
     void remove(List<Watcher> watchers);
 }

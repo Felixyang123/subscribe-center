@@ -3,11 +3,22 @@ package com.wly.center.admin.manager;
 import com.wly.center.admin.dao.entity.Node;
 import com.wly.center.core.exception.NodeExistException;
 
-public record NodeManager(NodeStorage nodeStorage, WatcherManager watcherManager) {
+import java.util.concurrent.locks.ReentrantLock;
+
+public record NodeManager(NodeStorage nodeStorage, WatcherManager watcherManager, ReentrantLock lock) {
+
+    public NodeManager(NodeStorage nodeStorage, WatcherManager watcherManager) {
+        this(nodeStorage, watcherManager, new ReentrantLock());
+    }
 
     public void add(Node node) {
-        if (!nodeStorage.add(node)) {
-            throw new NodeExistException("节点已存在：" + node.getName());
+        lock.lock();
+        try {
+            if (!nodeStorage.add(node)) {
+                throw new NodeExistException("节点已存在：" + node.getName());
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -18,6 +29,12 @@ public record NodeManager(NodeStorage nodeStorage, WatcherManager watcherManager
             node = nodeStorage.get(node.getName());
             nodeStorage.remove(node.getName());
         }
+
+        watcherManager.nodeDeleted(node);
+    }
+
+    public void remove(String name) {
+        Node node = nodeStorage.remove(name);
 
         watcherManager.nodeDeleted(node);
     }

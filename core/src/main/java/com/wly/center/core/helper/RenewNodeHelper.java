@@ -6,7 +6,9 @@ import com.wly.center.core.pojo.req.OpenRenewNodeReq;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.CollectionUtils;
 
+import java.util.UUID;
 import java.util.concurrent.*;
 
 @Slf4j
@@ -16,6 +18,8 @@ public class RenewNodeHelper {
     private final DelayQueue<RenewNodeTask> renewNodeTaskDelayQueue = new DelayQueue<>();
 
     private final ConcurrentMap<String, RenewNodeTask> renewNodeTaskMap = new ConcurrentHashMap<>();
+
+    private final ConcurrentMap<String, CopyOnWriteArrayList<RenewNodeTask>> node2TasksMap = new ConcurrentHashMap<>();
 
     private final ExecutorService renewExecutor = Executors.newSingleThreadExecutor();
 
@@ -30,7 +34,7 @@ public class RenewNodeHelper {
                 try {
                     task = renewNodeTaskDelayQueue.take();
 
-                    if (task.isDeleted()) {
+                    if (!renewNodeTaskMap.containsKey(task.getKey())) {
                         continue;
                     }
 
@@ -45,7 +49,7 @@ public class RenewNodeHelper {
                         Thread.currentThread().interrupt();
                     } else if (task != null && e instanceof BusinessException businessException
                             && BusinessExceptions.NODE_NOT_EXIST.name().equals(businessException.getCode())) {
-                        removeRenewNodeTask(task.getNodeName());
+                        removeTasksByNode(task.getNodeName());
                     }
                 }
             }
@@ -57,17 +61,30 @@ public class RenewNodeHelper {
         renewExecutor.shutdownNow();
     }
 
-    public void addRenewNodeTask(RestExchangeClient client, String nodeName) {
+    public RenewNodeTask addRenewNodeTask(RestExchangeClient client, String nodeName) {
         RenewNodeTask task = new RenewNodeTask(client, nodeName, renewIntervalSeconds);
         renewNodeTaskDelayQueue.offer(task);
-        renewNodeTaskMap.put(nodeName, task);
+        renewNodeTaskMap.put(task.getKey(), task);
+        node2TasksMap.computeIfAbsent(nodeName, k -> new CopyOnWriteArrayList<>()).add(task);
+        return task;
     }
 
-    public void removeRenewNodeTask(String nodeName) {
-        renewNodeTaskMap.computeIfPresent(nodeName, (k, v) -> {
-            v.delete();
-            return v;
-        });
+    public void removeTasksByNode(String nodeName) {
+        CopyOnWriteArrayList<RenewNodeTask> tasks = node2TasksMap.remove(nodeName);
+        if (!CollectionUtils.isEmpty(tasks)) {
+            tasks.forEach(task -> renewNodeTaskMap.remove(task.getKey()));
+        }
+    }
+
+    public void removeTaskByKey(String key) {
+        RenewNodeTask renewNodeTask = renewNodeTaskMap.remove(key);
+
+        if (renewNodeTask != null) {
+            node2TasksMap.computeIfPresent(renewNodeTask.getNodeName(), (k, v) -> {
+                v.removeIf(task -> task.getKey().equals(key));
+                return v;
+            });
+        }
     }
 
     public static class RenewNodeTask implements Runnable, Delayed {
@@ -79,7 +96,7 @@ public class RenewNodeHelper {
         private final Long expireAt;
 
         @Getter
-        private boolean deleted = false;
+        private final String key;
 
         public RenewNodeTask(RestExchangeClient client,
                              String nodeName,
@@ -90,10 +107,7 @@ public class RenewNodeHelper {
             long renewIntervalMs = renewIntervalSeconds * 1000;
             this.nextRenewTime = System.currentTimeMillis() + renewIntervalMs;
             this.expireAt = this.nextRenewTime + renewIntervalMs * 3;
-        }
-
-        public void delete() {
-            this.deleted = true;
+            this.key = UUID.randomUUID().toString().replace("-", "");
         }
 
         @Override

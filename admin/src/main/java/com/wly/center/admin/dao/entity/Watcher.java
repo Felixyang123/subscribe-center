@@ -1,6 +1,7 @@
 package com.wly.center.admin.dao.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.wly.center.core.enumeration.WatcherCycleEnum;
@@ -20,7 +21,10 @@ public class Watcher {
     @TableId(type = IdType.AUTO)
     private Long id;
 
-    private Long nodeId;
+    @TableField(value = "`key`")
+    private String key;
+
+    private String node;
 
     private String ip;
 

@@ -24,24 +24,24 @@ public class WatcherStorageImpl implements WatcherStorage {
     }
 
     @Override
-    public List<Watcher> watchers(Long nodeId) {
-        List<Watcher> watchers = cacheStorage.watchers(nodeId);
+    public List<Watcher> watchers(String nodeName) {
+        List<Watcher> watchers = cacheStorage.watchers(nodeName);
         if (!CollectionUtils.isEmpty(watchers)) {
             return watchers;
         }
 
-        watchers = persistStorage.watchers(nodeId);
+        watchers = persistStorage.watchers(nodeName);
         watchers.forEach(cacheStorage::add);
         return watchers;
     }
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public List<Watcher> remove(Long nodeId) {
-        List<Watcher> watchers = persistStorage.remove(nodeId);
+    public List<Watcher> remove(String nodeName) {
+        persistStorage.remove(nodeName);
 
-        cacheStorage.remove(nodeId);
-        return watchers;
+        // 删除结果以内存为准，因为内存删除是线程安全的，保证CacheNodeStorage和PersistNodeStorage后台定时删除过期临时节点的任务在并发下只会出发一次watchers
+        return cacheStorage.remove(nodeName);
     }
 
     @Transactional(rollbackFor = Exception.class)

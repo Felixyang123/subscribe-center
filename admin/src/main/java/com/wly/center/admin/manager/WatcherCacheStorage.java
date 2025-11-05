@@ -12,25 +12,25 @@ import java.util.concurrent.ConcurrentMap;
 @Component
 public class WatcherCacheStorage implements WatcherStorage {
 
-    private final ConcurrentMap<Long, ConcurrentMap<Long, Watcher>> NODE_WATCHERS_MAP = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, ConcurrentMap<Long, Watcher>> NODE_WATCHERS_MAP = new ConcurrentHashMap<>();
 
     @Override
     public void add(Watcher watcher) {
-        NODE_WATCHERS_MAP.computeIfAbsent(watcher.getNodeId(), k -> new ConcurrentHashMap<>()).put(watcher.getId(), watcher);
+        NODE_WATCHERS_MAP.computeIfAbsent(watcher.getNode(), k -> new ConcurrentHashMap<>()).put(watcher.getId(), watcher);
     }
 
     @Override
-    public List<Watcher> watchers(Long nodeId) {
-        return Optional.ofNullable(NODE_WATCHERS_MAP.get(nodeId)).map(ConcurrentMap::values).map(ArrayList::new).orElse(new ArrayList<>());
+    public List<Watcher> watchers(String nodeName) {
+        return Optional.ofNullable(NODE_WATCHERS_MAP.get(nodeName)).map(ConcurrentMap::values).map(ArrayList::new).orElse(new ArrayList<>());
     }
 
     @Override
-    public List<Watcher> remove(Long nodeId) {
-        return Optional.ofNullable(NODE_WATCHERS_MAP.remove(nodeId)).map(ConcurrentMap::values).map(ArrayList::new).orElse(null);
+    public List<Watcher> remove(String nodeName) {
+        return Optional.ofNullable(NODE_WATCHERS_MAP.remove(nodeName)).map(ConcurrentMap::values).map(ArrayList::new).orElse(null);
     }
 
     @Override
     public void remove(List<Watcher> watchers) {
-        watchers.forEach(watcher -> NODE_WATCHERS_MAP.get(watcher.getNodeId()).remove(watcher.getId()));
+        watchers.forEach(watcher -> NODE_WATCHERS_MAP.get(watcher.getNode()).remove(watcher.getId()));
     }
 }

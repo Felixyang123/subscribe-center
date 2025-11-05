@@ -11,6 +11,8 @@ import lombok.NoArgsConstructor;
 @Builder
 public class OpenWatchReq {
 
+    private String key;
+
     private String nodeName;
 
     private String ip;
@@ -19,6 +21,7 @@ public class OpenWatchReq {
 
     /**
      * 0-循环 1-单次
+     *
      * @see com.wly.center.core.enumeration.WatcherCycleEnum
      */
     private Integer cycleType;

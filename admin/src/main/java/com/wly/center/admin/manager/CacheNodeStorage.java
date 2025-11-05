@@ -93,18 +93,13 @@ public class CacheNodeStorage implements NodeStorage, SmartLifecycle {
     }
 
     public void update(Node node) {
-        Node prev = NODE_MAP.put(node.getId(), node);
-        if (prev != null) {
-            NODE_NAME_ID_MAP.remove(prev.getName());
-            NODE_NAME_ID_MAP.put(node.getName(), node.getId());
-        }
+        NODE_MAP.computeIfPresent(node.getId(), (k, v) -> node);
+        NODE_NAME_ID_MAP.computeIfPresent(node.getName(), (k, v) -> node.getId());
     }
 
     @Override
     public void start() {
-
         executorService.execute(this::run);
-
     }
 
     @Override
@@ -147,8 +142,12 @@ public class CacheNodeStorage implements NodeStorage, SmartLifecycle {
                 } else {
                     DELAY_QUEUE.offer(new NodeDelayed(node.getId(), node.getExpireAt()));
                 }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
+            } catch (Exception e) {
+                if (e instanceof InterruptedException) {
+                    Thread.currentThread().interrupt();
+                } else {
+                    log.warn("CacheNodeStorage run error", e);
+                }
             }
         }
     }

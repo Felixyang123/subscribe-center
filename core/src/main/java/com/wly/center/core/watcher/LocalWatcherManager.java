@@ -8,17 +8,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class WatcherManager {
-
-    private static final WatcherManager INSTANCE = new WatcherManager();
+public class LocalWatcherManager {
 
     private final ConcurrentMap<String, ConcurrentMap<String, Watcher>> NODE_WATCHERS_MAP = new ConcurrentHashMap<>();
 
     private final CopyOnWriteArrayList<Watcher> GLOBAL_WATCHERS = new CopyOnWriteArrayList<>();
-
-    public static WatcherManager getInstance() {
-        return INSTANCE;
-    }
 
     public void addWatcher(String nodeName, Watcher watcher) {
         NODE_WATCHERS_MAP.computeIfAbsent(nodeName, k -> new ConcurrentHashMap<>()).put(watcher.key(), watcher);

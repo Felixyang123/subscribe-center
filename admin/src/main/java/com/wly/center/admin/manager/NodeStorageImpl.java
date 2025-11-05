@@ -65,21 +65,17 @@ public class NodeStorageImpl implements NodeStorage {
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Node remove(Long id) {
-        Node node = persistStorage.remove(id);
+        persistStorage.remove(id);
 
-        cacheStorage.remove(id);
-
-        return node;
+        return cacheStorage.remove(id);
     }
 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Node remove(String name) {
-        Node node = persistStorage.remove(name);
+        persistStorage.remove(name);
 
-        cacheStorage.remove(name);
-
-        return node;
+        return cacheStorage.remove(name);
     }
 
     @Transactional(rollbackFor = Exception.class)

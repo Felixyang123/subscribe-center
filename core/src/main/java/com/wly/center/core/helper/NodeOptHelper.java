@@ -1,11 +1,11 @@
 package com.wly.center.core.helper;
 
 import com.alibaba.fastjson2.JSON;
-import com.wly.center.core.enumeration.WatcherCycleEnum;
 import com.wly.center.core.pojo.req.OpenAddNodeReq;
+import com.wly.center.core.pojo.req.OpenUpdateNodeReq;
 import com.wly.center.core.pojo.resp.OpenAddNodeResp;
 import com.wly.center.core.pojo.resp.OpenNodeDetailResp;
-import com.wly.center.core.watcher.NodeDeletedWatcher;
+import com.wly.center.core.watcher.RenewNodeTaskWatcher;
 import com.wly.center.core.watcher.WatchClient;
 
 import java.util.Optional;
@@ -32,9 +32,9 @@ public record NodeOptHelper(WatchClient watchClient, RenewNodeHelper renewNodeHe
     public OpenNodeDetailResp createTemporaryMasterNode(String nodeName, Object value, Long expireAt) {
         OpenNodeDetailResp masterNode = createMasterNode(nodeName, value, expireAt, true);
 
-        renewNodeHelper.addRenewNodeTask(watchClient.restExchangeClient(), masterNode.getName());
+        RenewNodeHelper.RenewNodeTask renewNodeTask = renewNodeHelper.addRenewNodeTask(watchClient.restExchangeClient(), masterNode.getName());
 
-        watchClient.watch(nodeName, new NodeDeletedWatcher(renewNodeHelper, watchClient.restExchangeClient()), WatcherCycleEnum.SINGLE);
+        watchClient.watch(nodeName, new RenewNodeTaskWatcher(renewNodeHelper, watchClient.restExchangeClient(), renewNodeTask.getKey()));
         return masterNode;
     }
 
@@ -50,13 +50,25 @@ public record NodeOptHelper(WatchClient watchClient, RenewNodeHelper renewNodeHe
     public OpenNodeDetailResp createTemporarySlaveNode(String nodeName, Object value, Long expireAt) {
         OpenNodeDetailResp slaveNode = createSlaveNode(nodeName, value, expireAt, true);
 
-        renewNodeHelper.addRenewNodeTask(watchClient.restExchangeClient(), slaveNode.getName());
+        RenewNodeHelper.RenewNodeTask renewNodeTask = renewNodeHelper.addRenewNodeTask(watchClient.restExchangeClient(), slaveNode.getName());
 
-        watchClient.watch(nodeName, new NodeDeletedWatcher(renewNodeHelper, watchClient.restExchangeClient()), WatcherCycleEnum.SINGLE);
+        watchClient.watch(slaveNode.getName(), new RenewNodeTaskWatcher(renewNodeHelper, watchClient.restExchangeClient(), renewNodeTask.getKey()));
         return slaveNode;
     }
 
     public OpenNodeDetailResp createPersistSlaveNode(String nodeName, Object value) {
         return createSlaveNode(nodeName, value, -1L, false);
+    }
+
+    public void removeNode(String nodeName) {
+        watchClient.restExchangeClient().removeNode(nodeName);
+    }
+
+    public void updateNode(String nodeName, Object value) {
+        watchClient.restExchangeClient().updateNode(OpenUpdateNodeReq.builder().name(nodeName).data(Optional.ofNullable(value).map(JSON::toJSONString).orElse(null)).build());
+    }
+
+    public OpenNodeDetailResp getNodeDetail(String nodeName) {
+        return watchClient.restExchangeClient().getNodeDetail(nodeName);
     }
 }

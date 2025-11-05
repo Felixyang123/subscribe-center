@@ -9,27 +9,29 @@ import com.wly.center.core.utils.NetworkUtils;
 import org.springframework.util.CollectionUtils;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
-public record WatchClient(RestExchangeClient restExchangeClient, int port) {
+public record WatchClient(RestExchangeClient restExchangeClient, LocalWatcherManager watcherManager, int port) {
 
-    public void watch(String nodeName, Watcher watcher, WatcherCycleEnum cycleType) {
+    public void watch(String nodeName, Watcher watcher) {
         restExchangeClient.watchNode(
                 OpenWatchReq.builder()
+                        .key(watcher.key())
                         .nodeName(nodeName)
                         .ip(NetworkUtils.getServerIp())
                         .port(port)
-                        .cycleType(cycleType.getCode())
+                        .cycleType(watcher.cycleType().getCode())
                         .build());
 
-        WatcherManager.getInstance().addWatcher(nodeName, watcher);
-    }
-
-    public void watch(String nodeName, Watcher watcher) {
-        watch(nodeName, watcher, WatcherCycleEnum.CYCLE);
+        watcherManager.addWatcher(nodeName, watcher);
     }
 
     public void notify(WatcherExchangeReq req) {
-        List<Watcher> watchers = WatcherManager.getInstance().getWatchers(req.getNode());
+        List<Watcher> watchers = watcherManager.getWatchers(req.getNode());
+
+        if (!CollectionUtils.isEmpty(req.getKeys())) {
+            watchers = watchers.stream().filter(watcher -> req.getKeys().contains(watcher.key())).collect(Collectors.toList());
+        }
         if (CollectionUtils.isEmpty(watchers)) {
             return;
         }
@@ -41,7 +43,7 @@ public record WatchClient(RestExchangeClient restExchangeClient, int port) {
         }
 
         List<Watcher> singleWatchers = watchers.stream().filter(watcher -> watcher.cycleType().equals(WatcherCycleEnum.SINGLE)).toList();
-        WatcherManager.getInstance().removeWatchers(req.getNode(), singleWatchers);
+        watcherManager.removeWatchers(req.getNode(), singleWatchers);
     }
 
 }

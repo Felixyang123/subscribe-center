@@ -2,6 +2,7 @@ package com.wly.center.admin.service;
 
 import com.wly.center.admin.common.BeanConvertor;
 import com.wly.center.admin.dao.entity.Node;
+import com.wly.center.admin.lock.LocalLock;
 import com.wly.center.admin.manager.NodeManager;
 import com.wly.center.core.enumeration.NodeTypeEnum;
 import com.wly.center.core.exception.NodeNotExistException;
@@ -17,7 +18,7 @@ import java.util.*;
 
 @Service
 @Slf4j
-public record NodeService(NodeManager nodeManager) {
+public record NodeService(NodeManager nodeManager, LocalLock lock) {
 
     public OpenAddNodeResp addNode(OpenAddNodeReq req) {
         if (Boolean.TRUE.equals(req.getSlave())) {
@@ -76,11 +77,16 @@ public record NodeService(NodeManager nodeManager) {
     }
 
     public void removeNode(String name) {
-        Node node = nodeManager.nodeStorage().get(name);
-        if (node == null) {
-            throw new NodeNotExistException("节点不存在：" + name);
+        lock.lock();
+        try {
+            Node node = nodeManager.nodeStorage().get(name);
+            log.debug("Remove node: {}-{}", name, node);
+            if (node != null) {
+                nodeManager.remove(node);
+            }
+        } finally {
+            lock.unlock();
         }
-        nodeManager.remove(node);
     }
 
     public void updateNode(OpenUpdateNodeReq req) {
