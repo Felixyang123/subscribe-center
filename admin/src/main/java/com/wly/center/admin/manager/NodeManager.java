@@ -1,24 +1,19 @@
 package com.wly.center.admin.manager;
 
 import com.wly.center.admin.dao.entity.Node;
+import com.wly.center.admin.lock.OptimizeLocalHashMapLock;
 import com.wly.center.core.exception.NodeExistException;
 
-import java.util.concurrent.locks.ReentrantLock;
-
-public record NodeManager(NodeStorage nodeStorage, WatcherManager watcherManager, ReentrantLock lock) {
-
-    public NodeManager(NodeStorage nodeStorage, WatcherManager watcherManager) {
-        this(nodeStorage, watcherManager, new ReentrantLock());
-    }
+public record NodeManager(NodeStorage nodeStorage, WatcherManager watcherManager, OptimizeLocalHashMapLock lock) {
 
     public void add(Node node) {
-        lock.lock();
+        lock.lock(node.getName());
         try {
             if (!nodeStorage.add(node)) {
                 throw new NodeExistException("节点已存在：" + node.getName());
             }
         } finally {
-            lock.unlock();
+            lock.unlock(node.getName());
         }
     }
 

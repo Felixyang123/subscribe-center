@@ -2,17 +2,17 @@ package com.wly.center.admin.service;
 
 import com.wly.center.admin.dao.entity.Node;
 import com.wly.center.admin.dao.entity.Watcher;
-import com.wly.center.admin.lock.LocalLock;
+import com.wly.center.admin.lock.OptimizeLocalHashMapLock;
 import com.wly.center.admin.manager.NodeManager;
 import com.wly.center.core.exception.NodeNotExistException;
 import com.wly.center.core.pojo.req.OpenWatchReq;
 import org.springframework.stereotype.Service;
 
 @Service
-public record WatcherService(NodeManager nodeManager, LocalLock lock) {
+public record WatcherService(NodeManager nodeManager, OptimizeLocalHashMapLock lock) {
 
     public void watch(OpenWatchReq req) {
-        lock.lock();
+        lock.lock(req.getNodeName());
         try {
             Node node = nodeManager.nodeStorage().get(req.getNodeName());
             if (node == null) {
@@ -27,7 +27,7 @@ public record WatcherService(NodeManager nodeManager, LocalLock lock) {
                     .cycleType(req.getCycleType())
                     .build());
         } finally {
-            lock.unlock();
+            lock.unlock(req.getNodeName());
         }
     }
 }

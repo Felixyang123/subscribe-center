@@ -2,7 +2,7 @@ package com.wly.center.admin.service;
 
 import com.wly.center.admin.common.BeanConvertor;
 import com.wly.center.admin.dao.entity.Node;
-import com.wly.center.admin.lock.LocalLock;
+import com.wly.center.admin.lock.OptimizeLocalHashMapLock;
 import com.wly.center.admin.manager.NodeManager;
 import com.wly.center.core.enumeration.NodeTypeEnum;
 import com.wly.center.core.exception.NodeNotExistException;
@@ -14,11 +14,14 @@ import com.wly.center.core.pojo.resp.OpenNodeDetailResp;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @Slf4j
-public record NodeService(NodeManager nodeManager, LocalLock lock) {
+public record NodeService(NodeManager nodeManager, OptimizeLocalHashMapLock lock) {
 
     public OpenAddNodeResp addNode(OpenAddNodeReq req) {
         if (Boolean.TRUE.equals(req.getSlave())) {
@@ -77,7 +80,7 @@ public record NodeService(NodeManager nodeManager, LocalLock lock) {
     }
 
     public void removeNode(String name) {
-        lock.lock();
+        lock.lock(name);
         try {
             Node node = nodeManager.nodeStorage().get(name);
             log.debug("Remove node: {}-{}", name, node);
@@ -85,7 +88,7 @@ public record NodeService(NodeManager nodeManager, LocalLock lock) {
                 nodeManager.remove(node);
             }
         } finally {
-            lock.unlock();
+            lock.unlock(name);
         }
     }
 
