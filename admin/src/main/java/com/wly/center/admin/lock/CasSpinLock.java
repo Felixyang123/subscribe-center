@@ -1,18 +1,23 @@
 package com.wly.center.admin.lock;
 
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 
 public class CasSpinLock implements Lock {
-    private final AtomicReference<Thread> holder = new AtomicReference<>();
+
+    private final ConcurrentMap<String, AtomicReference<Thread>> holders = new ConcurrentHashMap<>();
 
     @Override
     public boolean tryLock(String key) {
+        AtomicReference<Thread> holder = holders.computeIfAbsent(key, k -> new AtomicReference<>());
         return holder.compareAndSet(null, Thread.currentThread());
     }
 
     @Override
     public String lock(String key) {
+        AtomicReference<Thread> holder = holders.computeIfAbsent(key, k -> new AtomicReference<>());
         while (true) {
             if (holder.compareAndSet(null, Thread.currentThread())) {
                 return key;
@@ -23,7 +28,10 @@ public class CasSpinLock implements Lock {
 
     @Override
     public void unlock(String key) {
-        holder.compareAndSet(Thread.currentThread(), null);
+        holders.computeIfPresent(key, (k, v) -> {
+            v.compareAndSet(Thread.currentThread(), null);
+            return v;
+        });
     }
 
     public static void main(String[] args) throws Exception {
