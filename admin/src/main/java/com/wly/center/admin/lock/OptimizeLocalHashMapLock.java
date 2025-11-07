@@ -1,7 +1,5 @@
 package com.wly.center.admin.lock;
 
-import org.springframework.stereotype.Component;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,7 +12,6 @@ import java.util.concurrent.locks.ReentrantLock;
  * a holders counter inside LockEntry and updating it atomically via
  * ConcurrentHashMap.compute/computeIfPresent.
  */
-@Component
 public class OptimizeLocalHashMapLock implements Lock {
 
     private static class LockEntry {

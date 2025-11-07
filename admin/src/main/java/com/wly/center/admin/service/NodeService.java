@@ -2,7 +2,7 @@ package com.wly.center.admin.service;
 
 import com.wly.center.admin.common.BeanConvertor;
 import com.wly.center.admin.dao.entity.Node;
-import com.wly.center.admin.lock.OptimizeLocalHashMapLock;
+import com.wly.center.admin.lock.LockTemplate;
 import com.wly.center.admin.manager.NodeManager;
 import com.wly.center.core.enumeration.NodeTypeEnum;
 import com.wly.center.core.exception.NodeNotExistException;
@@ -21,7 +21,7 @@ import java.util.UUID;
 
 @Service
 @Slf4j
-public record NodeService(NodeManager nodeManager, OptimizeLocalHashMapLock lock) {
+public record NodeService(NodeManager nodeManager, LockTemplate lockTemplate) {
 
     public OpenAddNodeResp addNode(OpenAddNodeReq req) {
         if (Boolean.TRUE.equals(req.getSlave())) {
@@ -80,16 +80,13 @@ public record NodeService(NodeManager nodeManager, OptimizeLocalHashMapLock lock
     }
 
     public void removeNode(String name) {
-        lock.lock(name);
-        try {
+        lockTemplate.lockThenExecute(name, () -> {
             Node node = nodeManager.nodeStorage().get(name);
             log.debug("Remove node: {}-{}", name, node);
             if (node != null) {
                 nodeManager.remove(node);
             }
-        } finally {
-            lock.unlock(name);
-        }
+        });
     }
 
     public void updateNode(OpenUpdateNodeReq req) {
