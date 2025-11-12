@@ -71,6 +71,8 @@ public record NodeService(NodeManager nodeManager, LockTemplate lockTemplate) {
 
             if (Boolean.TRUE.equals(req.getTemporary())) {
                 node.setExpireAt(req.getExpireAt());
+            } else {
+                node.setExpireAt(-1L);
             }
 
             nodeManager.add(node);

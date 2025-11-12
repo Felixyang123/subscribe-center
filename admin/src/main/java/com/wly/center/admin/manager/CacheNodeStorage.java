@@ -45,7 +45,7 @@ public class CacheNodeStorage implements NodeStorage, SmartLifecycle {
             CHILD_NODE_MAP.computeIfAbsent(node.getParentId(), k -> new CopyOnWriteArrayList<>()).add(node);
         }
 
-        if (node.getExpireAt() > -1) {
+        if (node.getExpireAt() != null && node.getExpireAt() > -1) {
             DELAY_QUEUE.offer(new NodeDelayed(node.getId(), node.getExpireAt()));
         }
 
