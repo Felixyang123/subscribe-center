@@ -42,14 +42,14 @@ public class RenewNodeHelper {
 
                     task.run();
                 } catch (Exception e) {
-                    log.warn("renew node task error", e);
-
-                    // 捕获NodeNotExistException后删除renewTask
                     if (e instanceof InterruptedException) {
                         Thread.currentThread().interrupt();
                     } else if (task != null && e instanceof BusinessException businessException
                             && BusinessExceptions.NODE_NOT_EXIST.name().equals(businessException.getCode())) {
+                        // 捕获NodeNotExistException后删除renewTask
                         removeTasksByNode(task.getNodeName());
+                    } else {
+                        log.warn("renew node task error, task: {}, error: ", task, e);
                     }
                 }
             }
