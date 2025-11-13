@@ -42,7 +42,7 @@ public class ConfClient {
                     return null;
                 }
 
-                log.error("get conf error", e);
+                log.error("get conf error, key:{}, error: ", key, e);
                 throw new BusinessException(BusinessExceptions.DEFAULT_ERROR.name(), e.getMessage());
             }
         });
@@ -59,7 +59,7 @@ public class ConfClient {
                     return null;
                 }
 
-                log.error("get conf error", e);
+                log.error("refresh conf error, key:{}, error: ", key, e);
                 return v;
             }
         });
