@@ -1,11 +1,12 @@
 package com.wly.center.common.conf;
 
-import com.wly.center.core.enumeration.WatcherCycleEnum;
+import com.wly.center.core.enumeration.WatcherExchangeType;
 import com.wly.center.core.exception.BusinessException;
 import com.wly.center.core.exception.BusinessExceptions;
 import com.wly.center.core.pojo.resp.OpenNodeDetailResp;
+import com.wly.center.core.watcher.CycleWatcher;
+import com.wly.center.core.watcher.NodeDeletedWatcher;
 import com.wly.center.core.watcher.WatchClient;
-import com.wly.center.core.watcher.Watcher;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +32,8 @@ public class ConfClient {
                 //get and watch
                 OpenNodeDetailResp node = watchClient.restExchangeClient().getNodeDetail(key);
 
-                watchClient.watch(key, new ConfClientWatcher(clz, this));
+                watchClient.watch(key, new ConfDataWatcher(clz, this));
+                watchClient.watch(key, new ConfNodeWatcher(this));
 
                 return new ConfData(clz, node.getData());
             } catch (Exception e) {
@@ -76,27 +78,41 @@ public class ConfClient {
         return value(key, null, clz);
     }
 
-    public record ConfClientWatcher(Class<?> clz, ConfClient confClient, String key) implements Watcher {
+    public record ConfDataWatcher(Class<?> clz, ConfClient confClient, String key) implements CycleWatcher {
 
-        public ConfClientWatcher(Class<?> clz, ConfClient confClient) {
+        public ConfDataWatcher(Class<?> clz, ConfClient confClient) {
             this(clz, confClient, UUID.randomUUID().toString().replace("-", ""));
+        }
+
+        @Override
+        public void notify(String node, Integer exchangeType) {
+            if (exchangeType().getCode().equals(exchangeType)) {
+                log.debug("conf data node data changed, node: {}", node);
+                confClient.refresh(node, clz);
+            }
+        }
+
+        @Override
+        public String key() {
+            return key;
+        }
+
+        @Override
+        public WatcherExchangeType exchangeType() {
+            return WatcherExchangeType.DATA_CHANGE;
+        }
+    }
+
+    public record ConfNodeWatcher(ConfClient confClient, String key) implements NodeDeletedWatcher {
+
+        public ConfNodeWatcher(ConfClient confClient) {
+            this(confClient, UUID.randomUUID().toString().replace("-", ""));
         }
 
         @Override
         public void nodeDeleted(String nodeName) {
             log.debug("conf data node deleted, node: {}", nodeName);
             confClient.removeCache(nodeName);
-        }
-
-        @Override
-        public void nodeDataChanged(String nodeName) {
-            log.debug("conf data node data changed, node: {}", nodeName);
-            confClient.refresh(nodeName, clz);
-        }
-
-        @Override
-        public WatcherCycleEnum cycleType() {
-            return WatcherCycleEnum.CYCLE;
         }
 
         @Override

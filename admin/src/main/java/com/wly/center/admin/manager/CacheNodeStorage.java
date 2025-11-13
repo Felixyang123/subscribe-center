@@ -30,8 +30,6 @@ public class CacheNodeStorage implements NodeStorage, SmartLifecycle {
 
     private final NodeRep nodeRep;
 
-    private final WatcherManager watcherManager;
-
     public Boolean add(Node node) {
         Long nodedId = NODE_NAME_ID_MAP.putIfAbsent(node.getName(), node.getId());
         if (nodedId != null) {
@@ -134,11 +132,7 @@ public class CacheNodeStorage implements NodeStorage, SmartLifecycle {
                 }
 
                 if (System.currentTimeMillis() > node.getExpireAt()) {
-                    node = remove(nodeDelayed.nodeId);
-
-                    if (node != null) {
-                        watcherManager.nodeDeleted(node);
-                    }
+                    remove(nodeDelayed.nodeId);
                 } else {
                     DELAY_QUEUE.offer(new NodeDelayed(node.getId(), node.getExpireAt()));
                 }

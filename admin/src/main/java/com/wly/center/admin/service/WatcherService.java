@@ -24,6 +24,7 @@ public record WatcherService(NodeManager nodeManager, LockTemplate lockTemplate)
                     .ip(req.getIp())
                     .port(req.getPort())
                     .cycleType(req.getCycleType())
+                    .notifyType(req.getNotifyType())
                     .build());
         });
     }

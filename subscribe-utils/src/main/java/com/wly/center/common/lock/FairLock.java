@@ -2,13 +2,12 @@ package com.wly.center.common.lock;
 
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
-import com.wly.center.core.enumeration.WatcherCycleEnum;
 import com.wly.center.core.exception.BusinessException;
 import com.wly.center.core.exception.BusinessExceptions;
 import com.wly.center.core.factory.ExchangeServerFactory;
 import com.wly.center.core.pojo.resp.OpenNodeDetailResp;
 import com.wly.center.core.utils.NetworkUtils;
-import com.wly.center.core.watcher.Watcher;
+import com.wly.center.core.watcher.NodeDeletedWatcher;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 
@@ -87,7 +86,7 @@ public record FairLock(ExchangeServerFactory serverFactory) implements Subscribe
 
     private boolean watch(String lockName, OpenNodeDetailResp prev, OpenNodeDetailResp node) {
         try {
-            serverFactory.watchClient().watch(prev.getName(), new FairLockWatcher(serverFactory, Thread.currentThread(), lockName));
+            serverFactory.watchClient().watch(prev.getName(), new FairLockWatcher(Thread.currentThread(), lockName));
             WatchContext.addWatchCount(prev.getId());
             WatchContext.addWatchNodeId(prev.getId(), node.getId());
             WatchContext.addWatchNode(prev.getId(), node);
@@ -141,29 +140,19 @@ public record FairLock(ExchangeServerFactory serverFactory) implements Subscribe
         }
     }
 
-    public record FairLockWatcher(ExchangeServerFactory serverFactory,
-                                  Thread tryLockThread,
-                                  String lockName,
-                                  String key) implements Watcher {
+    public record FairLockWatcher(
+            Thread tryLockThread,
+            String lockName,
+            String key) implements NodeDeletedWatcher {
 
-        public FairLockWatcher(ExchangeServerFactory serverFactory, Thread tryLockThread, String lockName) {
-            this(serverFactory, tryLockThread, lockName, UUID.randomUUID().toString().replace("-", ""));
+        public FairLockWatcher(Thread tryLockThread, String lockName) {
+            this(tryLockThread, lockName, UUID.randomUUID().toString().replace("-", ""));
         }
 
         @Override
         public void nodeDeleted(String nodeName) {
             log.debug("Lock released, lockName: {}, temporary slave node removed: {}", lockName, nodeName);
             LockSupport.unpark(tryLockThread);
-        }
-
-        @Override
-        public void nodeDataChanged(String nodeName) {
-
-        }
-
-        @Override
-        public WatcherCycleEnum cycleType() {
-            return WatcherCycleEnum.SINGLE;
         }
 
         @Override

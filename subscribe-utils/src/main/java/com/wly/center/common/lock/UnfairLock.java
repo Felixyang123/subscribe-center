@@ -2,13 +2,12 @@ package com.wly.center.common.lock;
 
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
-import com.wly.center.core.enumeration.WatcherCycleEnum;
 import com.wly.center.core.exception.BusinessException;
 import com.wly.center.core.exception.BusinessExceptions;
 import com.wly.center.core.factory.ExchangeServerFactory;
 import com.wly.center.core.pojo.resp.OpenNodeDetailResp;
 import com.wly.center.core.utils.NetworkUtils;
-import com.wly.center.core.watcher.Watcher;
+import com.wly.center.core.watcher.NodeDeletedWatcher;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 
@@ -45,7 +44,7 @@ public record UnfairLock(ExchangeServerFactory serverFactory) implements Subscri
                 logWarn("Lock failed: {}-{}, error: {}", tid, lockName, businessException.getMessage());
 
                 WatchContext.addLockTrace("Lock failed, NODE_EXIST");
-                if (!watch(lockName)){
+                if (!watch(lockName)) {
                     return lock(lockName);
                 }
                 WatchContext.addLockTrace("Thread park");
@@ -119,7 +118,7 @@ public record UnfairLock(ExchangeServerFactory serverFactory) implements Subscri
         }
     }
 
-    public record UnfairLockWatcher(Thread tryLockThread, String key) implements Watcher {
+    public record UnfairLockWatcher(Thread tryLockThread, String key) implements NodeDeletedWatcher {
         public UnfairLockWatcher(Thread tryLockThread) {
             this(tryLockThread, UUID.randomUUID().toString().replace("-", ""));
         }
@@ -128,15 +127,6 @@ public record UnfairLock(ExchangeServerFactory serverFactory) implements Subscri
         public void nodeDeleted(String nodeName) {
             log.debug("Lock released, retry lock: {} , lockName: {}", tryLockThread.threadId(), nodeName);
             LockSupport.unpark(tryLockThread);
-        }
-
-        @Override
-        public void nodeDataChanged(String nodeName) {
-        }
-
-        @Override
-        public WatcherCycleEnum cycleType() {
-            return WatcherCycleEnum.SINGLE;
         }
 
         @Override

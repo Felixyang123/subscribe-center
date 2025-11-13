@@ -34,7 +34,7 @@ public record NodeOptHelper(WatchClient watchClient, RenewNodeHelper renewNodeHe
 
         RenewNodeHelper.RenewNodeTask renewNodeTask = renewNodeHelper.addRenewNodeTask(watchClient.restExchangeClient(), masterNode.getName());
 
-        watchClient.watch(nodeName, new RenewNodeTaskWatcher(renewNodeHelper, watchClient.restExchangeClient(), renewNodeTask.getKey()));
+        watchClient.watch(nodeName, new RenewNodeTaskWatcher(renewNodeHelper, renewNodeTask.getKey()));
         return masterNode;
     }
 
@@ -52,7 +52,7 @@ public record NodeOptHelper(WatchClient watchClient, RenewNodeHelper renewNodeHe
 
         RenewNodeHelper.RenewNodeTask renewNodeTask = renewNodeHelper.addRenewNodeTask(watchClient.restExchangeClient(), slaveNode.getName());
 
-        watchClient.watch(slaveNode.getName(), new RenewNodeTaskWatcher(renewNodeHelper, watchClient.restExchangeClient(), renewNodeTask.getKey()));
+        watchClient.watch(slaveNode.getName(), new RenewNodeTaskWatcher(renewNodeHelper, renewNodeTask.getKey()));
         return slaveNode;
     }
 

@@ -2,6 +2,7 @@ package com.wly.center.admin.manager;
 
 import com.wly.center.admin.dao.entity.Node;
 import com.wly.center.admin.dao.entity.Watcher;
+import com.wly.center.admin.lock.LockTemplate;
 import com.wly.center.core.client.ExchangeClient;
 import com.wly.center.core.enumeration.ExchangeType;
 import com.wly.center.core.enumeration.WatcherCycleEnum;
@@ -15,7 +16,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-public record WatcherManager(WatcherStorage watcherStorage) {
+public record WatcherManager(WatcherStorage watcherStorage, LockTemplate lockTemplate) {
 
     public void nodeDeleted(Node node) {
         List<Watcher> watchers = watcherStorage.remove(node.getName());
@@ -23,19 +24,36 @@ public record WatcherManager(WatcherStorage watcherStorage) {
             return;
         }
 
-        notify(node, watchers, WatcherExchangeType.NODE_DELETE);
+        List<Watcher> nodeDeletedWatchers = watchers.stream().filter(w ->
+                WatcherExchangeType.NODE_DELETE.getCode().equals(w.getNotifyType())).toList();
+
+        notify(node, nodeDeletedWatchers, WatcherExchangeType.NODE_DELETE);
     }
 
-    public synchronized void dataChanged(Node node) {
-        List<Watcher> watchers = watcherStorage.watchers(node.getName());
-        if (CollectionUtils.isEmpty(watchers)) {
-            return;
-        }
+    public void childrenListChanged(Node node) {
+        notifyAndClearWatchers(node, WatcherExchangeType.CHILDREN_LIST_CHANGE);
+    }
 
-        notify(node, watchers, WatcherExchangeType.DATA_CHANGE);
+    public void dataChanged(Node node) {
+        notifyAndClearWatchers(node, WatcherExchangeType.DATA_CHANGE);
+    }
 
-        List<Watcher> singleWatchers = watchers.stream().filter(w -> WatcherCycleEnum.SINGLE.getCode().equals(w.getCycleType())).toList();
-        watcherStorage.remove(singleWatchers);
+    public void notifyAndClearWatchers(Node node, WatcherExchangeType exchangeType) {
+        lockTemplate.lockThenExecute(node.getName(), () -> {
+            List<Watcher> watchers = watcherStorage.watchers(node.getName());
+            if (CollectionUtils.isEmpty(watchers)) {
+                return;
+            }
+
+            List<Watcher> toExecWatchers = watchers.stream().filter(w ->
+                    exchangeType.getCode().equals(w.getNotifyType())).toList();
+
+            notify(node, toExecWatchers, exchangeType);
+
+            List<Watcher> singleWatchers = toExecWatchers.stream().filter(w ->
+                    WatcherCycleEnum.SINGLE.getCode().equals(w.getCycleType())).toList();
+            watcherStorage.remove(singleWatchers);
+        });
     }
 
     private void notify(Node node, List<Watcher> watchers, WatcherExchangeType exchangeType) {

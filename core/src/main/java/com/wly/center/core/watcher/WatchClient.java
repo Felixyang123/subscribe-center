@@ -1,7 +1,6 @@
 package com.wly.center.core.watcher;
 
 import com.wly.center.core.enumeration.WatcherCycleEnum;
-import com.wly.center.core.enumeration.WatcherExchangeType;
 import com.wly.center.core.helper.RestExchangeClient;
 import com.wly.center.core.pojo.req.OpenWatchReq;
 import com.wly.center.core.protocal.WatcherExchangeReq;
@@ -21,12 +20,13 @@ public record WatchClient(RestExchangeClient restExchangeClient, LocalWatcherMan
                         .ip(NetworkUtils.getServerIp())
                         .port(port)
                         .cycleType(watcher.cycleType().getCode())
+                        .notifyType(watcher.exchangeType().getCode())
                         .build());
 
         watcherManager.addWatcher(nodeName, watcher);
     }
 
-    public void notify(WatcherExchangeReq req) {
+    public synchronized void notify(WatcherExchangeReq req) {
         List<Watcher> watchers = watcherManager.getWatchers(req.getNode());
 
         if (!CollectionUtils.isEmpty(req.getKeys())) {
@@ -36,11 +36,7 @@ public record WatchClient(RestExchangeClient restExchangeClient, LocalWatcherMan
             return;
         }
 
-        if (WatcherExchangeType.NODE_DELETE.getCode().equals(req.getExchangeType())) {
-            watchers.forEach(watcher -> watcher.nodeDeleted(req.getNode()));
-        } else if (WatcherExchangeType.DATA_CHANGE.getCode().equals(req.getExchangeType())) {
-            watchers.forEach(watcher -> watcher.nodeDataChanged(req.getNode()));
-        }
+        watchers.forEach(watcher -> watcher.notify(req.getNode(), req.getExchangeType()));
 
         List<Watcher> singleWatchers = watchers.stream().filter(watcher -> watcher.cycleType().equals(WatcherCycleEnum.SINGLE)).toList();
         watcherManager.removeWatchers(req.getNode(), singleWatchers);

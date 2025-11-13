@@ -30,7 +30,7 @@ public record AdminNodeController(NodeService nodeService) {
             throw new NodeNotExistException("节点不存在：" + id);
         }
 
-        nodeService.nodeManager().remove(node);
+        nodeService.nodeManager().remove(id);
         return Result.success();
     }
 }

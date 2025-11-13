@@ -86,7 +86,7 @@ public record NodeService(NodeManager nodeManager, LockTemplate lockTemplate) {
             Node node = nodeManager.nodeStorage().get(name);
             log.debug("Remove node: {}-{}", name, node);
             if (node != null) {
-                nodeManager.remove(node);
+                nodeManager.remove(node.getId());
             }
         });
     }

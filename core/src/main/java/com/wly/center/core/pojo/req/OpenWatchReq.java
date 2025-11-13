@@ -25,4 +25,11 @@ public class OpenWatchReq {
      * @see com.wly.center.core.enumeration.WatcherCycleEnum
      */
     private Integer cycleType;
+
+    /**
+     * 0-节点删除 1-节点数据变更 2-节点子节点列表变更
+     *
+     * @see com.wly.center.core.enumeration.WatcherExchangeType
+     */
+    private Integer notifyType;
 }

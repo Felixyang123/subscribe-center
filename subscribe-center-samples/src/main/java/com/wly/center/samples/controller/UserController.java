@@ -5,10 +5,10 @@ import com.wly.center.core.factory.ExchangeServerFactory;
 import com.wly.center.core.pojo.Result;
 import com.wly.center.core.pojo.req.OpenUpdateNodeReq;
 import com.wly.center.core.pojo.resp.OpenNodeDetailResp;
-import com.wly.center.core.watcher.NoopWatcher;
 import com.wly.center.samples.bean.User;
 import com.wly.center.samples.context.UserContext;
-import com.wly.center.samples.watcher.UserWatcher;
+import com.wly.center.samples.watcher.UserChangedWatcher;
+import com.wly.center.samples.watcher.UserDeletedWatcher;
 import com.wly.center.starter.config.SubscribeCenterProps;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -26,8 +26,8 @@ public class UserController {
     public Result<OpenNodeDetailResp> addUser(@RequestBody User user) {
         OpenNodeDetailResp resp = serverFactory.defaultNodeOptHelper().createTemporaryMasterNode(user.getName(), user, System.currentTimeMillis() + 1000 * props.getRenewIntervalSeconds() * 3);
 
-        serverFactory.watchClient().watch(user.getName(), new UserWatcher(serverFactory.defaultExchangeClient()));
-        serverFactory.watchClient().watch(user.getName(), new NoopWatcher());
+        serverFactory.watchClient().watch(user.getName(), new UserChangedWatcher(serverFactory.defaultExchangeClient()));
+        serverFactory.watchClient().watch(user.getName(), new UserDeletedWatcher());
         UserContext.add(user);
         return Result.success(resp);
     }

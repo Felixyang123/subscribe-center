@@ -94,7 +94,17 @@ public class PersistNodeStorage implements NodeStorage, SmartLifecycle {
                 if (!CollectionUtils.isEmpty(expiredNodes)) {
                     nodeRep.removeBatchByIds(expiredNodes);
 
-                    expiredNodes.forEach(watcherManager::nodeDeleted);
+                    expiredNodes.forEach(node -> {
+                        watcherManager.nodeDeleted(node);
+
+                        if (node.getParentId() != null && node.getParentId() > 0) {
+                            Node parentNode = get(node.getParentId());
+
+                            if (parentNode != null) {
+                                watcherManager.childrenListChanged(node);
+                            }
+                        }
+                    });
                 }
             } catch (Exception e) {
                 log.error("Expired node check error: ", e);

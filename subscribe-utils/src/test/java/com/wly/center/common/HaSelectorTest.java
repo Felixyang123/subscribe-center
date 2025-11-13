@@ -81,18 +81,18 @@ public class HaSelectorTest {
         factory1.start();
         HaSelector selector1 = new HaSelector(factory1);
 
-        List<HaSelector> selectors = Stream.of(selector, selector1).filter(s -> s.select("test")).toList();
+        List<HaSelector> selectors = Stream.of(selector, selector1).filter(s -> s.select("test1")).toList();
         Assertions.assertEquals(1, selectors.size());
 
         HaSelector master = selectors.getFirst();
-        OpenNodeDetailResp node = master.serverFactory().defaultNodeOptHelper().getNodeDetail("test");
+        OpenNodeDetailResp node = master.serverFactory().defaultNodeOptHelper().getNodeDetail("test1");
         Assertions.assertNotNull(node);
         JSONObject clientJson = JSON.parseObject(node.getData());
         Assertions.assertEquals(master.serverFactory().port(), clientJson.getLong("clientPort"));
 
         Thread.sleep(4000);
 
-        node = master.serverFactory().defaultNodeOptHelper().getNodeDetail("test");
+        node = master.serverFactory().defaultNodeOptHelper().getNodeDetail("test1");
         Assertions.assertNotNull(node);
         clientJson = JSON.parseObject(node.getData());
         Assertions.assertEquals(master.serverFactory().port(), clientJson.getInteger("clientPort"));
@@ -102,7 +102,7 @@ public class HaSelectorTest {
         master.serverFactory().stop();
         Thread.sleep(4000);
 
-        node = master.serverFactory().defaultNodeOptHelper().getNodeDetail("test");
+        node = master.serverFactory().defaultNodeOptHelper().getNodeDetail("test1");
         Assertions.assertNotNull(node);
         clientJson = JSON.parseObject(node.getData());
         Assertions.assertEquals(slavePort, clientJson.getInteger("clientPort"));

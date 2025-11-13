@@ -7,6 +7,7 @@ import lombok.Getter;
 @Getter
 public enum WatcherExchangeType {
     NODE_DELETE(0),
-    DATA_CHANGE(1);
+    DATA_CHANGE(1),
+    CHILDREN_LIST_CHANGE(2);
     private final Integer code;
 }

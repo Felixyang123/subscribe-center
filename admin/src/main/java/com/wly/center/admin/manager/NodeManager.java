@@ -14,21 +14,24 @@ public record NodeManager(NodeStorage nodeStorage, WatcherManager watcherManager
         });
     }
 
-    public void remove(Node node) {
-        if (node.getId() != null) {
-            nodeStorage.remove(node.getId());
-        } else {
-            node = nodeStorage.get(node.getName());
-            nodeStorage.remove(node.getName());
-        }
+    public void remove(Long nodeId) {
+        Node node = nodeStorage.remove(nodeId);
 
-        watcherManager.nodeDeleted(node);
+        if (node != null) {
+            afterRemove(node);
+        }
     }
 
-    public void remove(String name) {
-        Node node = nodeStorage.remove(name);
-
+    public void afterRemove(Node node) {
         watcherManager.nodeDeleted(node);
+
+        if (node.getParentId() != null && node.getParentId() > 0) {
+            Node parentNode = nodeStorage.get(node.getParentId());
+
+            if (parentNode != null) {
+                watcherManager.childrenListChanged(node);
+            }
+        }
     }
 
 
