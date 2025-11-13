@@ -29,7 +29,7 @@ public record NodeManager(NodeStorage nodeStorage, WatcherManager watcherManager
             Node parentNode = nodeStorage.get(node.getParentId());
 
             if (parentNode != null) {
-                watcherManager.childrenListChanged(node);
+                watcherManager.childrenListChanged(parentNode);
             }
         }
     }

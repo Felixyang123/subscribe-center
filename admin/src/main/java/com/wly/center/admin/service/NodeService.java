@@ -55,6 +55,7 @@ public record NodeService(NodeManager nodeManager, LockTemplate lockTemplate) {
             }
 
             nodeManager.add(slaveNode);
+            nodeManager.watcherManager().childrenListChanged(masterNode);
 
             return OpenAddNodeResp.builder()
                     .masterNode(BeanConvertor.convert(masterNode))

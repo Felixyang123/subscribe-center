@@ -14,11 +14,12 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 @Builder
-public record ExchangeServerFactory(int port, String defaultBaseUrl, Long renewIntervalSeconds,
+public record ExchangeServerFactory(int port, String registerName, String defaultBaseUrl, Long renewIntervalSeconds,
                                     RestClientHelper defaultRestClient, RestExchangeClient defaultExchangeClient,
                                     LocalWatcherManager defaultWatcherManager, WatchClient watchClient,
                                     RenewNodeHelper defaultRenewNodeHelper, NodeOptHelper defaultNodeOptHelper) {
     public ExchangeServerFactory(int port,
+                                 String registerName,
                                  String defaultBaseUrl,
                                  Long renewIntervalSeconds,
                                  RestClientHelper defaultRestClient,
@@ -28,6 +29,7 @@ public record ExchangeServerFactory(int port, String defaultBaseUrl, Long renewI
                                  RenewNodeHelper defaultRenewNodeHelper,
                                  NodeOptHelper defaultNodeOptHelper) {
         this.port = port;
+        this.registerName = registerName;
         this.defaultBaseUrl = defaultBaseUrl;
         this.renewIntervalSeconds = renewIntervalSeconds;
         this.defaultRestClient = Optional.ofNullable(defaultRestClient).orElseGet(() -> simpleRestClient(this.defaultBaseUrl));

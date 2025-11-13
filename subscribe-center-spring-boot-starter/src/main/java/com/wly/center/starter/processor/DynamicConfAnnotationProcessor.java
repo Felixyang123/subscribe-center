@@ -1,4 +1,4 @@
-package com.wly.center.starter.confdata;
+package com.wly.center.starter.processor;
 
 import com.wly.center.common.conf.ConfClient;
 import com.wly.center.common.conf.ConfData;

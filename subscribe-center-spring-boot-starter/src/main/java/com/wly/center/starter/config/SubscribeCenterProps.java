@@ -12,4 +12,6 @@ public class SubscribeCenterProps {
     private String baseAdminUrl;
 
     private Long renewIntervalSeconds;
+
+    private String registerName;
 }

@@ -14,3 +14,4 @@ subscribe-center:
   port: 8300
   baseAdminUrl: http://localhost:8200
   renewIntervalSeconds: 5
+  registerName: ${spring.application.name}

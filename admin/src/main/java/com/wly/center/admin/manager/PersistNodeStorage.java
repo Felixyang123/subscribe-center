@@ -101,7 +101,7 @@ public class PersistNodeStorage implements NodeStorage, SmartLifecycle {
                             Node parentNode = get(node.getParentId());
 
                             if (parentNode != null) {
-                                watcherManager.childrenListChanged(node);
+                                watcherManager.childrenListChanged(parentNode);
                             }
                         }
                     });
