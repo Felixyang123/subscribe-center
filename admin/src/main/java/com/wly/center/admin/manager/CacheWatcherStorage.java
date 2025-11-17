@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 @Component
-public class WatcherCacheStorage implements WatcherStorage {
+public class CacheWatcherStorage implements WatcherStorage {
 
     private final ConcurrentMap<String, ConcurrentMap<Long, Watcher>> NODE_WATCHERS_MAP = new ConcurrentHashMap<>();
 

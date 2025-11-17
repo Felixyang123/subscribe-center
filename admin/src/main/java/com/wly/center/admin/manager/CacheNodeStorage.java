@@ -2,10 +2,12 @@ package com.wly.center.admin.manager;
 
 import com.wly.center.admin.dao.entity.Node;
 import com.wly.center.admin.dao.rep.NodeRep;
+import com.wly.center.admin.selector.MasterInitEvent;
 import com.wly.center.core.enumeration.NodeTypeEnum;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.SmartLifecycle;
+import org.springframework.context.event.ApplicationEventMulticaster;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -29,6 +31,8 @@ public class CacheNodeStorage implements NodeStorage, SmartLifecycle {
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     private final NodeRep nodeRep;
+
+    private final ApplicationEventMulticaster eventMulticaster;
 
     public Boolean add(Node node) {
         Long nodedId = NODE_NAME_ID_MAP.putIfAbsent(node.getName(), node.getId());
@@ -116,6 +120,8 @@ public class CacheNodeStorage implements NodeStorage, SmartLifecycle {
         List<Node> nodes = nodeRep.list();
 
         nodes.forEach(this::add);
+
+        eventMulticaster.multicastEvent(new MasterInitEvent(new Object()));
 
         while (running) {
             try {

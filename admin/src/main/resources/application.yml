@@ -25,3 +25,8 @@ logging:
   level:
     root: INFO
     com.wly.center: DEBUG
+
+master:
+  ha:
+    select:
+      renewInterval: 10

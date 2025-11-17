@@ -11,7 +11,7 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class WatcherStorageImpl implements WatcherStorage {
-    private final WatcherCacheStorage cacheStorage;
+    private final CacheWatcherStorage cacheStorage;
 
     private final PersistWatcherStorage persistStorage;
 
