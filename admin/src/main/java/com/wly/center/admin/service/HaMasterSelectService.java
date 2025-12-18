@@ -74,34 +74,41 @@ public class HaMasterSelectService implements Destroyable, AutoCloseable {
             listen(req);
         } catch (Exception e) {
             if (e instanceof DuplicateKeyException) {
-                while (true) {
-                    HaMasterInstance currentMasterInstance = haMasterRep.getOne(Wrappers.<HaMasterInstance>lambdaQuery()
-                            .eq(HaMasterInstance::getServiceName, req.getServiceName()));
-                    if (currentMasterInstance == null) {
-                        serveAsMaster(req);
-                        return;
-                    }
+                upgradeMaster(req);
+            } else {
+                log.warn("Serve as HA master selection instance fail: ", e);
+                throw new BusinessException("HA_MASTER_SELECTION_FAIL",
+                        "Serve as HA master selection instance fail, error: " + e.getMessage());
+            }
+        }
+    }
 
-                    AtomicBoolean upgrade = new AtomicBoolean(false);
-                    txTemplate.executeWithoutResult(status -> {
-                        if (upgrade(req, currentMasterInstance)) {
-                            upgrade.set(true);
-                            log(req);
-                        }
-                    });
-                    if (upgrade.get()) {
-                        scheduleRenew(req);
-                        listen(req);
-                        return;
-                    }
-
-                    LockSupport.parkNanos(1000 * 1000 * 100); // 100ms
-                }
+    private void upgradeMaster(HaMasterSelectReq req) {
+        while (true) {
+            HaMasterInstance currentMasterInstance = haMasterRep.getOne(Wrappers.<HaMasterInstance>lambdaQuery()
+                    .eq(HaMasterInstance::getServiceName, req.getServiceName()));
+            if (currentMasterInstance == null) {
+                serveAsMaster(req);
+                return;
             }
 
-            log.warn("Serve as HA master selection instance fail: ", e);
-            throw new BusinessException("HA_MASTER_SELECTION_FAIL",
-                    "Serve as HA master selection instance fail, error: " + e.getMessage());
+            AtomicBoolean upgrade = new AtomicBoolean(false);
+            txTemplate.executeWithoutResult(status -> {
+                if (upgrade(req, currentMasterInstance)) {
+                    upgrade.set(true);
+                    log(req);
+                }
+            });
+            // 成功升级成 master
+            if (upgrade.get()) {
+                // 开启续约
+                scheduleRenew(req);
+                // 监听初始化完成事件
+                listen(req);
+                return;
+            }
+
+            LockSupport.parkNanos(1000 * 1000 * 100); // 100ms
         }
     }
 
@@ -120,8 +127,8 @@ public class HaMasterSelectService implements Destroyable, AutoCloseable {
         snapshotRep.save(HaMasterSelectSnapshot.builder()
                 .instanceInfo(JSON.toJSONString(HaMasterInstance.builder()
                         .serviceName(req.getServiceName())
-                        .host(req.getHost()).
-                        port(req.getPort())
+                        .host(req.getHost())
+                        .port(req.getPort())
                         .build()))
                 .serviceName(req.getServiceName())
                 .operator("system")
