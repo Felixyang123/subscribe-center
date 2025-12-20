@@ -39,16 +39,20 @@ public class HaMasterSelectService implements Destroyable, AutoCloseable {
 
     private final ExecutorService selectExecutor;
 
+    private final HaServiceInstanceService instanceService;
+
     public HaMasterSelectService(HaMasterRep haMasterRep,
                                  HaMasterSelectSnapshotRep snapshotRep,
                                  TransactionTemplate txTemplate,
-                                 MasterInitListener masterInitListener) {
+                                 MasterInitListener masterInitListener,
+                                 HaServiceInstanceService instanceService) {
         this.haMasterRep = haMasterRep;
         this.snapshotRep = snapshotRep;
         this.renewExecutor = Executors.newSingleThreadScheduledExecutor();
         this.txTemplate = txTemplate;
         this.masterInitListener = masterInitListener;
         this.selectExecutor = Executors.newSingleThreadExecutor();
+        this.instanceService = instanceService;
     }
 
     @Override
@@ -65,7 +69,8 @@ public class HaMasterSelectService implements Destroyable, AutoCloseable {
         try {
             txTemplate.executeWithoutResult(status -> {
                 selectMaster(req);
-                log(req);
+                saveSnapshot(req);
+                instanceService.becomeMaster(req.getServiceName(), req.getHost(), req.getPort());
             });
 
             // 开启续约
@@ -96,7 +101,8 @@ public class HaMasterSelectService implements Destroyable, AutoCloseable {
             txTemplate.executeWithoutResult(status -> {
                 if (upgrade(req, currentMasterInstance)) {
                     upgrade.set(true);
-                    log(req);
+                    saveSnapshot(req);
+                    instanceService.becomeMaster(req.getServiceName(), req.getHost(), req.getPort());
                 }
             });
             // 成功升级成 master
@@ -122,7 +128,7 @@ public class HaMasterSelectService implements Destroyable, AutoCloseable {
         }
     }
 
-    private void log(HaMasterSelectReq req) {
+    private void saveSnapshot(HaMasterSelectReq req) {
         log.info("Serve as HA master selection instance success: {}", req);
         snapshotRep.save(HaMasterSelectSnapshot.builder()
                 .instanceInfo(JSON.toJSONString(HaMasterInstance.builder()
@@ -131,7 +137,6 @@ public class HaMasterSelectService implements Destroyable, AutoCloseable {
                         .port(req.getPort())
                         .build()))
                 .serviceName(req.getServiceName())
-                .operator("system")
                 .createTime(new Date())
                 .build());
     }

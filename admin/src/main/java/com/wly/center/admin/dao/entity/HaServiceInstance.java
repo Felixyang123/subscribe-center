@@ -8,24 +8,23 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@TableName(value = "ha_master_select_snapshot", autoResultMap = true)
-public class HaMasterSelectSnapshot {
+@TableName(value = "ha_service_instance", autoResultMap = true)
+public class HaServiceInstance {
 
     @TableId(type = IdType.AUTO)
     private Long id;
 
     private String serviceName;
 
-    /**
-     * HaMasterInstance json
-     */
-    private String instanceInfo;
+    private String host;
 
-    private Date createTime;
+    private Integer port;
+
+    private Boolean serveAsMaster;
+
+    private Long expireAt;
 }
