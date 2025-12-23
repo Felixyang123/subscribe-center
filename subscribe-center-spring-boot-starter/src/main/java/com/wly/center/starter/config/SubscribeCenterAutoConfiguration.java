@@ -18,6 +18,10 @@ public class SubscribeCenterAutoConfiguration {
                 .registerName(props.getRegisterName())
                 .defaultBaseUrl(props.getBaseAdminUrl())
                 .renewIntervalSeconds(props.getRenewIntervalSeconds())
+                .adminServiceName(props.getAdminServiceName())
+                .discoveryAddresses(props.getDiscoveryAddresses())
+                .refreshClusterIntervalSeconds(props.getRefreshClusterIntervalSeconds())
+                .healthCheckIntervalSeconds(props.getHealthCheckIntervalSeconds())
                 .build();
     }
 

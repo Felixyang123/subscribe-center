@@ -6,8 +6,8 @@ import com.wly.center.admin.dao.rep.HaMasterRep;
 import com.wly.center.admin.dao.rep.HaMasterSelectSnapshotRep;
 import com.wly.center.admin.enumeration.HaMasterSelectInstanceStatusEnum;
 import com.wly.center.admin.pojo.req.HaMasterSelectReq;
-import com.wly.center.admin.selector.MasterInitEvent;
-import com.wly.center.admin.selector.MasterInitListener;
+import com.wly.center.admin.ha.MasterInitEvent;
+import com.wly.center.admin.ha.MasterInitListener;
 import jakarta.annotation.Resource;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Assertions;
@@ -37,13 +37,16 @@ public class HaTest {
     @Resource
     private ApplicationEventMulticaster eventMulticaster;
 
+    @Resource
+    private HaServiceInstanceService instanceService;
+
     @Test
     @DisplayName("测试HA主从选举")
     @SneakyThrows
     void HaElectionTest() {
-        HaMasterSelectService service = new HaMasterSelectService(haMasterRep, snapshotRep, txTemplate, masterInitListener);
+        HaMasterSelectService service = new HaMasterSelectService(haMasterRep, snapshotRep, txTemplate, masterInitListener, instanceService);
 
-        HaMasterSelectService service1 = new HaMasterSelectService(haMasterRep, snapshotRep, txTemplate, masterInitListener);
+        HaMasterSelectService service1 = new HaMasterSelectService(haMasterRep, snapshotRep, txTemplate, masterInitListener, instanceService);
 
         Future<?> future = service.asyncServeAsMaster(HaMasterSelectReq.builder()
                 .serviceName("test-ha-election")
@@ -99,7 +102,7 @@ public class HaTest {
     @DisplayName("测试关闭主从选举")
     @SneakyThrows
     void HaDownTest() {
-        HaMasterSelectService service = new HaMasterSelectService(haMasterRep, snapshotRep, txTemplate, masterInitListener);
+        HaMasterSelectService service = new HaMasterSelectService(haMasterRep, snapshotRep, txTemplate, masterInitListener, instanceService);
         Future<?> future = service.asyncServeAsMaster(HaMasterSelectReq.builder()
                 .serviceName("test-ha-close")
                 .host("127.0.0.1")
@@ -131,7 +134,7 @@ public class HaTest {
     @DisplayName("测试续约任务")
     @SneakyThrows
     void HaRenewTest() {
-        try (HaMasterSelectService service = new HaMasterSelectService(haMasterRep, snapshotRep, txTemplate, masterInitListener)) {
+        try (HaMasterSelectService service = new HaMasterSelectService(haMasterRep, snapshotRep, txTemplate, masterInitListener, instanceService)) {
             Future<?> future = service.asyncServeAsMaster(HaMasterSelectReq.builder()
                     .serviceName("test-ha-close")
                     .host("127.0.0.1")

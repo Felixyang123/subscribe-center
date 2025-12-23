@@ -14,55 +14,72 @@ import org.springframework.util.MultiValueMap;
 import java.util.List;
 import java.util.Map;
 
-public record RestExchangeClient(RestClientHelper restClientHelper) {
+public record RestExchangeClient(ClusterClient clusterClient) {
 
     private <T> T extractData(Result<T> result) {
-        if (result.getSuccess()) {
+        if (Boolean.TRUE.equals(result.getSuccess())) {
             return result.getData();
         }
         throw new BusinessException(result.getCode(), result.getMessage());
     }
 
     public OpenNodeDetailResp getNodeDetail(String nodeName) {
-        Result<OpenNodeDetailResp> result = restClientHelper.get("/open/node/detail", new ParameterizedTypeReference<Result<OpenNodeDetailResp>>() {
-        }, MultiValueMap.fromSingleValue(Map.of("nodeName", nodeName)));
-
-        return extractData(result);
+        return clusterClient.execute("/open/node/detail", (url, restClientHelper) -> {
+            Result<OpenNodeDetailResp> result = restClientHelper.get(url, new ParameterizedTypeReference<Result<OpenNodeDetailResp>>() {
+            }, MultiValueMap.fromSingleValue(Map.of("nodeName", nodeName)));
+            return extractData(result);
+        });
     }
 
     public OpenAddNodeResp addNode(OpenAddNodeReq req) {
-        Result<OpenAddNodeResp> result = restClientHelper.post("/open/node/add", req, new ParameterizedTypeReference<Result<OpenAddNodeResp>>() {
+        return clusterClient.execute("/open/node/add", (url, restClientHelper) -> {
+            Result<OpenAddNodeResp> result = restClientHelper.post(url, req, new ParameterizedTypeReference<Result<OpenAddNodeResp>>() {
+            });
+            return extractData(result);
         });
-        return extractData(result);
     }
 
     public void removeNode(String nodeName) {
-        Result<Void> result = restClientHelper.post("/open/node/remove", new ParameterizedTypeReference<Result<Void>>() {
-        }, MultiValueMap.fromSingleValue(Map.of("nodeName", nodeName)));
-        extractData(result);
+        clusterClient.execute("/open/node/remove", (url, restClientHelper) -> {
+            Result<Void> result = restClientHelper.post(url, new ParameterizedTypeReference<Result<Void>>() {
+            }, MultiValueMap.fromSingleValue(Map.of("nodeName", nodeName)));
+            extractData(result);
+            return null;
+        });
     }
 
     public void updateNode(OpenUpdateNodeReq req) {
-        Result<Void> result = restClientHelper.post("/open/node/update", req, new ParameterizedTypeReference<Result<Void>>() {
+        clusterClient.execute("/open/node/update", (url, restClientHelper) -> {
+            Result<Void> result = restClientHelper.post(url, req, new ParameterizedTypeReference<Result<Void>>() {
+            });
+            extractData(result);
+            return null;
         });
-        extractData(result);
     }
 
     public void watchNode(OpenWatchReq req) {
-        Result<Void> result = restClientHelper.post("/open/watcher/watch", req, new ParameterizedTypeReference<Result<Void>>() {
+        clusterClient.execute("/open/watcher/watch", (url, restClientHelper) -> {
+            Result<Void> result = restClientHelper.post(url, req, new ParameterizedTypeReference<Result<Void>>() {
+            });
+            extractData(result);
+            return null;
         });
-        extractData(result);
     }
 
     public List<OpenNodeDetailResp> children(String nodeName) {
-        Result<List<OpenNodeDetailResp>> result = restClientHelper.get("/open/node/children", new ParameterizedTypeReference<Result<List<OpenNodeDetailResp>>>() {
-        }, MultiValueMap.fromSingleValue(Map.of("parentName", nodeName)));
-        return extractData(result);
+        return clusterClient.execute("/open/node/children", (url, restClientHelper) -> {
+            Result<List<OpenNodeDetailResp>> result = restClientHelper.get(url, new ParameterizedTypeReference<Result<List<OpenNodeDetailResp>>>() {
+            }, MultiValueMap.fromSingleValue(Map.of("parentName", nodeName)));
+            return extractData(result);
+        });
     }
 
     public void renewNode(OpenRenewNodeReq req) {
-        Result<Void> result = restClientHelper.post("/open/node/renew", req, new ParameterizedTypeReference<Result<Void>>() {
+        clusterClient.execute("/open/node/renew", (url, restClientHelper) -> {
+            Result<Void> result = restClientHelper.post(url, req, new ParameterizedTypeReference<Result<Void>>() {
+            });
+            extractData(result);
+            return null;
         });
-        extractData(result);
     }
 }

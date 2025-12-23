@@ -5,4 +5,8 @@ import com.wly.center.admin.dao.entity.HaServiceInstance;
 
 public interface HaServiceInstanceMapper extends BaseMapper<HaServiceInstance> {
 
+    Integer insertIgnore(HaServiceInstance instance);
+
+    Integer upsert(HaServiceInstance instance);
+
 }

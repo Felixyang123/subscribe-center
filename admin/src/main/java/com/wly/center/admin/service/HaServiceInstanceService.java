@@ -3,6 +3,7 @@ package com.wly.center.admin.service;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.wly.center.admin.dao.entity.HaServiceInstance;
 import com.wly.center.admin.dao.rep.HaServiceInstanceRep;
+import com.wly.center.admin.enumeration.HaInstanceStatusEnum;
 import com.wly.center.core.exception.BusinessException;
 import com.wly.center.core.exception.BusinessExceptions;
 import com.wly.center.core.pojo.resp.OpenHaClusterInfoResp;
@@ -26,27 +27,26 @@ public class HaServiceInstanceService {
         Optional<HaServiceInstance> masterInstanceOptional = instances.stream().filter(instance ->
                 Objects.equals(host, instance.getHost()) && Objects.equals(port, instance.getPort())).findFirst();
 
-        if (masterInstanceOptional.isEmpty()) {
+        masterInstanceOptional.ifPresentOrElse(masterInstance -> {
+            for (HaServiceInstance instance : instances) {
+                if (instance.getId().equals(masterInstance.getId())) {
+                    instance.setServeAsMaster(Boolean.TRUE);
+                } else {
+                    instance.setServeAsMaster(Boolean.FALSE);
+                }
+            }
+            instanceRep.updateBatchById(instances);
+        }, () -> {
             throw new BusinessException(BusinessExceptions.INSTANCE_NOT_EXIST.name(),
                     String.format("%s:%s:%s become master fail, instance not exists", serviceName, host, port));
-        }
-
-        HaServiceInstance masterInstance = masterInstanceOptional.get();
-        for (HaServiceInstance instance : instances) {
-            if (instance.getId().equals(masterInstance.getId())) {
-                instance.setServeAsMaster(Boolean.TRUE);
-            } else {
-                instance.setServeAsMaster(Boolean.FALSE);
-            }
-        }
-
-        instanceRep.updateBatchById(instances);
+        });
     }
 
     public OpenHaClusterInfoResp queryClusterInfo(String serviceName) {
         List<HaServiceInstance> availableInstances = instanceRep.list(Wrappers.<HaServiceInstance>lambdaQuery()
                 .eq(HaServiceInstance::getServiceName, serviceName)
-                .ge(HaServiceInstance::getExpireAt, System.currentTimeMillis()));
+                .eq(HaServiceInstance::getInstanceStatus, HaInstanceStatusEnum.ONLINE.getCode())
+                .gt(HaServiceInstance::getExpireAt, System.currentTimeMillis()));
 
         OpenHaClusterInfoResp clusterInfoResp = new OpenHaClusterInfoResp();
         clusterInfoResp.setSalves(new ArrayList<>());
