@@ -1,7 +1,8 @@
-package com.wly.center.admin.selector;
+package com.wly.center.admin.ha;
 
 import com.wly.center.admin.dao.entity.HaServiceInstance;
 import com.wly.center.admin.dao.rep.HaServiceInstanceRep;
+import com.wly.center.admin.enumeration.HaInstanceStatusEnum;
 import com.wly.center.core.utils.NetworkUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,7 +21,6 @@ public class InstanceRegistry implements SmartLifecycle {
 
     private final HaServiceInstanceRep instanceRep;
 
-
     @Value("${spring.application.name}")
     private String appName;
 
@@ -33,24 +33,28 @@ public class InstanceRegistry implements SmartLifecycle {
     @Override
     public void start() {
         // 保存实例
+        long cur = System.currentTimeMillis();
         HaServiceInstance instance = HaServiceInstance.builder()
                 .host(NetworkUtils.getServerIp())
                 .port(port)
                 .serveAsMaster(Boolean.FALSE)
                 .serviceName(appName)
-                .expireAt(System.currentTimeMillis() + renewIntervalSeconds * 1000 * 3)
+                .expireAt(cur + renewIntervalSeconds * 1000 * 3)
+                .lastHeartbeat(cur)
+                .instanceStatus(HaInstanceStatusEnum.ONLINE.getCode())
                 .build();
-        instanceRep.save(instance);
+        instanceRep.getBaseMapper().upsert(instance);
 
         // 开启定时续租
-        renewExecutor.scheduleAtFixedRate(() ->
-                        instanceRep.updateById(HaServiceInstance.builder()
-                                .id(instance.getId())
-                                .expireAt(System.currentTimeMillis() + renewIntervalSeconds * 1000 * 3)
-                                .build()),
-                renewIntervalSeconds,
-                renewIntervalSeconds,
-                TimeUnit.SECONDS
+        renewExecutor.scheduleAtFixedRate(() -> {
+                    long heartbeat = System.currentTimeMillis();
+                    instanceRep.updateById(HaServiceInstance.builder()
+                            .id(instance.getId())
+                            .expireAt(heartbeat + renewIntervalSeconds * 1000 * 3)
+                            .lastHeartbeat(heartbeat)
+                            .instanceStatus(HaInstanceStatusEnum.ONLINE.getCode())
+                            .build());
+                }, renewIntervalSeconds, renewIntervalSeconds, TimeUnit.SECONDS
         );
     }
 

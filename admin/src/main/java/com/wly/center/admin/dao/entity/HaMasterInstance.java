@@ -32,6 +32,8 @@ public class HaMasterInstance {
      */
     private Integer instanceStatus;
 
+    private Integer epoch;
+
     private Long expireAt;
 
     private Date createTime;

@@ -1,4 +1,4 @@
-package com.wly.center.admin.selector;
+package com.wly.center.admin.ha;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationListener;

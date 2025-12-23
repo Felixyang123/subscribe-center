@@ -8,6 +8,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -27,4 +29,18 @@ public class HaServiceInstance {
     private Boolean serveAsMaster;
 
     private Long expireAt;
+
+    private Long lastHeartbeat;
+
+    /**
+     * 0-offline 1-online
+     * @see com.wly.center.admin.enumeration.HaInstanceStatusEnum
+     */
+    private Integer instanceStatus;
+
+    private String metadata;
+
+    private Date createdAt;
+
+    private Date updatedAt;
 }

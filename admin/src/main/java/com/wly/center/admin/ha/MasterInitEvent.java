@@ -1,4 +1,4 @@
-package com.wly.center.admin.selector;
+package com.wly.center.admin.ha;
 
 import org.springframework.context.ApplicationEvent;
 

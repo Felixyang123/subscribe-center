@@ -1,4 +1,4 @@
-package com.wly.center.admin.selector;
+package com.wly.center.admin.ha;
 
 import com.wly.center.admin.pojo.req.HaMasterSelectReq;
 import com.wly.center.admin.service.HaMasterSelectService;

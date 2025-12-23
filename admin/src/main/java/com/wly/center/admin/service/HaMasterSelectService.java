@@ -9,7 +9,7 @@ import com.wly.center.admin.dao.rep.HaMasterRep;
 import com.wly.center.admin.dao.rep.HaMasterSelectSnapshotRep;
 import com.wly.center.admin.enumeration.HaMasterSelectInstanceStatusEnum;
 import com.wly.center.admin.pojo.req.HaMasterSelectReq;
-import com.wly.center.admin.selector.MasterInitListener;
+import com.wly.center.admin.ha.MasterInitListener;
 import com.wly.center.core.exception.BusinessException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
@@ -99,7 +99,7 @@ public class HaMasterSelectService implements Destroyable, AutoCloseable {
 
             AtomicBoolean upgrade = new AtomicBoolean(false);
             txTemplate.executeWithoutResult(status -> {
-                if (upgrade(req, currentMasterInstance)) {
+                if (upgrade(req)) {
                     upgrade.set(true);
                     saveSnapshot(req);
                     instanceService.becomeMaster(req.getServiceName(), req.getHost(), req.getPort());
@@ -142,9 +142,12 @@ public class HaMasterSelectService implements Destroyable, AutoCloseable {
     }
 
     private void selectMaster(HaMasterSelectReq req) {
-        haMasterRep.save(BeanConvertor.convert(req));
+        HaMasterInstance instance = BeanConvertor.convert(req);
+        instance.setEpoch(0);
+        haMasterRep.save(instance);
     }
 
+    //TODO 如果下线需要剔除续租任务，避免影响后续其他实例选主
     private void scheduleRenew(HaMasterSelectReq req) {
         renewExecutor.scheduleAtFixedRate(() -> renew(req), req.getRenewIntervalSeconds(),
                 req.getRenewIntervalSeconds(), TimeUnit.SECONDS);
@@ -164,11 +167,10 @@ public class HaMasterSelectService implements Destroyable, AutoCloseable {
         renewExecutor.shutdownNow();
     }
 
-    private boolean upgrade(HaMasterSelectReq req, HaMasterInstance currentMasterInstance) {
+    private boolean upgrade(HaMasterSelectReq req) {
         return haMasterRep.update(BeanConvertor.convert(req), Wrappers.<HaMasterInstance>lambdaUpdate()
+                .setSql(true, "epoch = epoch + 1")
                 .eq(HaMasterInstance::getServiceName, req.getServiceName())
-                .eq(HaMasterInstance::getHost, currentMasterInstance.getHost())
-                .eq(HaMasterInstance::getPort, currentMasterInstance.getPort())
                 .le(HaMasterInstance::getExpireAt, System.currentTimeMillis()));
     }
 

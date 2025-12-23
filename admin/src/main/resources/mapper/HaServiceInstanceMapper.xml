@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wly.center.admin.dao.mapper.HaServiceInstanceMapper">
+
+	<!-- 自动结果映射（对应@TableName的autoResultMap=true） -->
+	<resultMap id="BaseResultMap" type="com.wly.center.admin.dao.entity.HaServiceInstance">
+		<id column="id" property="id" jdbcType="BIGINT"/>
+		<result column="service_name" property="serviceName" jdbcType="VARCHAR"/>
+		<result column="host" property="host" jdbcType="VARCHAR"/>
+		<result column="port" property="port" jdbcType="INTEGER"/>
+		<result column="serve_as_master" property="serveAsMaster" jdbcType="BOOLEAN"/>
+		<result column="expire_at" property="expireAt" jdbcType="BIGINT"/>
+		<result column="instance_status" property="instanceStatus" jdbcType="TINYINT"/>
+		<result column="metadata" property="metadata" jdbcType="VARCHAR"/>
+		<result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+		<result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP"/>
+		<result column="last_heartbeat" property="lastHeartbeat" jdbcType="BIGINT"/>
+	</resultMap>
+
+	<!-- 基础列名 -->
+	<sql id="Base_Column_List">
+		id, service_name, host, port, serve_as_master, expire_at,
+		status, is_deleted, version, weight, metadata,
+		created_at, updated_at, last_heartbeat
+	</sql>
+
+	<!-- 1. 新增实例（忽略重复） -->
+	<insert id="insertIgnore" parameterType="com.wly.center.admin.dao.entity.HaServiceInstance"
+			keyProperty="id" useGeneratedKeys="true">
+		INSERT IGNORE INTO ha_service_instance (
+		service_name, host, port, serve_as_master, expire_at,
+		instance_status, metadata, last_heartbeat
+		) VALUES (
+		#{serviceName}, #{host}, #{port}, #{serveAsMaster}, #{expireAt},
+		#{instanceStatus}, #{metadata}, #{lastHeartbeat}
+		)
+	</insert>
+
+	<!-- 2. UPSERT：存在则更新，不存在则插入（核心方法） -->
+	<insert id="upsert" parameterType="com.wly.center.admin.dao.entity.HaServiceInstance"
+			keyProperty="id" useGeneratedKeys="true">
+		INSERT INTO ha_service_instance (
+		service_name, host, port, serve_as_master, expire_at,
+		instance_status, metadata, last_heartbeat
+		) VALUES (
+		#{serviceName}, #{host}, #{port}, #{serveAsMaster}, #{expireAt},
+		#{instanceStatus}, #{metadata}, #{lastHeartbeat}
+		)
+		ON DUPLICATE KEY UPDATE
+		expire_at =  #{expireAt},
+		instance_status = #{instanceStatus},
+		metadata = #{metadata},
+		last_heartbeat = #{lastHeartbeat},
+		updated_at = NOW()
+	</insert>
+
+</mapper>
