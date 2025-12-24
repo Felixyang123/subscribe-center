@@ -5,6 +5,7 @@ import com.wly.center.core.exception.BusinessExceptions;
 import com.wly.center.core.pojo.req.OpenRenewNodeReq;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
 
@@ -87,6 +88,7 @@ public class RenewNodeHelper {
         }
     }
 
+    @ToString
     public static class RenewNodeTask implements Runnable, Delayed {
         @Getter
         private final RestExchangeClient client;

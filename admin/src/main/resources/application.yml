@@ -19,7 +19,7 @@ mybatis-plus:
   mapper-locations: classpath:/mapper/*.xml
 
 server:
-  port: 8200
+  port: 8201
 
 logging:
   level:
@@ -30,4 +30,4 @@ master:
   ha:
     select:
       enable: true
-      renewInterval: 10
+      renewInterval: 1

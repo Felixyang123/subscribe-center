@@ -13,7 +13,7 @@ logging:
 subscribe-center:
   port: 8300
   baseAdminUrl: http://localhost:8200
-  renewIntervalSeconds: 5
+  renewIntervalSeconds: 10
   registerName: ${spring.application.name}
   adminServiceName: subscribe-center-server
   discoveryAddresses:

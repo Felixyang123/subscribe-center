@@ -154,7 +154,8 @@ public class HaMasterSelectService implements Destroyable, AutoCloseable {
     }
 
     private void renew(HaMasterSelectReq req) {
-        haMasterRep.update(HaMasterInstance.builder()
+        haMasterRep.update(
+                HaMasterInstance.builder()
                         .expireAt(System.currentTimeMillis() + req.getRenewIntervalSeconds() * 1000 * 3)
                         .build(),
                 Wrappers.<HaMasterInstance>lambdaUpdate()
